@@ -1,7 +1,7 @@
 "use client";
 
 import { generateId } from "@/lib/utils";
-import { Chat, Message } from "@/types";
+import { Chat, Message, UploadedFile } from "@/types";
 import { useCallback, useEffect, useState } from "react";
 
 export function useChat() {
@@ -108,8 +108,10 @@ export function useChat() {
 
   // Send a message
   const sendMessage = useCallback(
-    async (content: string, attachments?: File[]) => {
-      if (!content.trim() && (!attachments || attachments.length === 0)) return;
+    async (content: string, attachments?: UploadedFile[]) => {
+      if (!content.trim() && (!attachments || attachments.length === 0)) {
+        return;
+      }
 
       let chatId = currentChatId;
 
@@ -126,47 +128,53 @@ export function useChat() {
         attachments: attachments?.map((file) => ({
           id: generateId(),
           type: file.type.startsWith("image/") ? "image" : "document",
-          url: URL.createObjectURL(file), // Temporary URL for preview
+          url: file.url, // Use Cloudinary URL from uploaded file
           filename: file.name,
           size: file.size,
           mimeType: file.type,
         })),
       };
 
-      // Add user message to chat
-      const updatedChat = chats.find((c) => c.id === chatId);
-      if (updatedChat) {
-        const newChat = {
-          ...updatedChat,
-          messages: [...updatedChat.messages, userMessage],
+      // Use functional update to get current state and build new chat
+      let chatWithUserMessage: Chat | undefined;
+
+      setChats((prevChats) => {
+        const currentChat = prevChats.find((c) => c.id === chatId);
+        if (!currentChat) {
+          console.error("Chat not found:", chatId);
+          return prevChats;
+        }
+
+        chatWithUserMessage = {
+          ...currentChat,
+          messages: [...currentChat.messages, userMessage],
           title:
-            updatedChat.messages.length === 0
+            currentChat.messages.length === 0
               ? content.length > 50
                 ? content.substring(0, 50) + "..."
                 : content
-              : updatedChat.title,
+              : currentChat.title,
           updatedAt: new Date(),
         };
 
-        setChats((prev) =>
-          prev.map((chat) => (chat.id === chatId ? newChat : chat))
+        return prevChats.map((chat) =>
+          chat.id === chatId ? chatWithUserMessage! : chat
         );
+      });
 
-        // Save to MongoDB
-        await saveChat(newChat);
+      if (!chatWithUserMessage) {
+        console.error("Failed to create chat with user message");
+        return;
       }
 
       setIsLoading(true);
 
       try {
-        // Get messages for context
-        const chat = chats.find((c) => c.id === chatId);
-        const messages = [...(chat?.messages || []), userMessage].map(
-          (msg) => ({
-            role: msg.role,
-            content: msg.content,
-          })
-        );
+        // Use the chat with user message we just created
+        const messages = chatWithUserMessage.messages.map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        }));
 
         // Call the AI API
         const response = await fetch("/api/chat", {
@@ -178,12 +186,12 @@ export function useChat() {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to get response");
+          const errorText = await response.text();
+          console.error("API Error Response:", errorText);
+          throw new Error(
+            `Failed to get response: ${response.status} ${errorText}`
+          );
         }
-
-        // Handle streaming response
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error("No response body");
 
         let assistantMessageContent = "";
         const assistantMessageId = generateId();
@@ -209,15 +217,44 @@ export function useChat() {
           )
         );
 
-        // Read the stream
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        // Check if response is streaming or plain text
+        const contentType = response.headers.get("content-type");
+        const isStreaming = !contentType?.includes("text/plain");
 
-          const chunk = new TextDecoder().decode(value);
-          assistantMessageContent += chunk;
+        if (isStreaming) {
+          // Handle streaming response (OpenAI)
+          const reader = response.body?.getReader();
+          if (!reader) throw new Error("No response body");
 
-          // Update the assistant message with new content
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = new TextDecoder().decode(value);
+            assistantMessageContent += chunk;
+
+            // Update the assistant message with new content
+            setChats((prev) =>
+              prev.map((chat) =>
+                chat.id === chatId
+                  ? {
+                      ...chat,
+                      messages: chat.messages.map((msg) =>
+                        msg.id === assistantMessageId
+                          ? { ...msg, content: assistantMessageContent }
+                          : msg
+                      ),
+                      updatedAt: new Date(),
+                    }
+                  : chat
+              )
+            );
+          }
+        } else {
+          // Handle non-streaming response (Hugging Face)
+          assistantMessageContent = await response.text();
+
+          // Update the assistant message with the complete response
           setChats((prev) =>
             prev.map((chat) =>
               chat.id === chatId
@@ -234,34 +271,60 @@ export function useChat() {
             )
           );
         }
+
+        // Save the complete chat to database
+        const finalChat: Chat = {
+          ...chatWithUserMessage,
+          messages: [
+            ...chatWithUserMessage.messages,
+            {
+              id: assistantMessageId,
+              role: "assistant" as const,
+              content: assistantMessageContent,
+              timestamp: new Date(),
+            },
+          ],
+          updatedAt: new Date(),
+        };
+
+        await saveChat(finalChat);
       } catch (error) {
         console.error("Error sending message:", error);
-        // Add error message
+        const errorMessageId = generateId();
+        const errorMessage = {
+          id: errorMessageId,
+          role: "assistant" as const,
+          content: "Sorry, I encountered an error. Please try again.",
+          timestamp: new Date(),
+        };
+
+        // Add error message to UI
         setChats((prev) =>
           prev.map((chat) =>
             chat.id === chatId
               ? {
                   ...chat,
-                  messages: [
-                    ...chat.messages,
-                    {
-                      id: generateId(),
-                      role: "assistant" as const,
-                      content:
-                        "Sorry, I encountered an error. Please try again.",
-                      timestamp: new Date(),
-                    },
-                  ],
+                  messages: [...chat.messages, errorMessage],
                   updatedAt: new Date(),
                 }
               : chat
           )
         );
+
+        // Build chat with error message for database save
+        const chatWithError: Chat = {
+          ...chatWithUserMessage,
+          messages: [...chatWithUserMessage.messages, errorMessage],
+          updatedAt: new Date(),
+        };
+
+        // Save chat with error message to database
+        saveChat(chatWithError).catch(console.error);
       } finally {
         setIsLoading(false);
       }
     },
-    [currentChatId, chats, createNewChat]
+    [currentChatId, createNewChat]
   );
 
   // Edit a message and regenerate response
@@ -383,29 +446,60 @@ export function useChat() {
               )
             );
           }
+
+          // Save the complete chat with the regenerated assistant response to database
+          const currentChat = chats.find((c) => c.id === currentChatId);
+          if (currentChat) {
+            const finalChat = {
+              ...currentChat,
+              messages: [
+                ...updatedMessages,
+                {
+                  id: assistantMessageId,
+                  role: "assistant" as const,
+                  content: assistantMessageContent,
+                  timestamp: new Date(),
+                },
+              ],
+              updatedAt: new Date(),
+            };
+            // Save to database without waiting to avoid blocking UI
+            saveChat(finalChat).catch(console.error);
+          }
         } catch (error) {
           console.error("Error regenerating response:", error);
-          // Add error message
+          const errorMessageId = generateId();
+          const errorMessage = {
+            id: errorMessageId,
+            role: "assistant" as const,
+            content:
+              "Sorry, I encountered an error while regenerating the response. Please try again.",
+            timestamp: new Date(),
+          };
+
+          // Add error message to UI
           setChats((prev) =>
             prev.map((chat) =>
               chat.id === currentChatId
                 ? {
                     ...chat,
-                    messages: [
-                      ...chat.messages,
-                      {
-                        id: generateId(),
-                        role: "assistant" as const,
-                        content:
-                          "Sorry, I encountered an error while regenerating the response. Please try again.",
-                        timestamp: new Date(),
-                      },
-                    ],
+                    messages: [...chat.messages, errorMessage],
                     updatedAt: new Date(),
                   }
                 : chat
             )
           );
+
+          // Save error message to database
+          const currentChat = chats.find((c) => c.id === currentChatId);
+          if (currentChat) {
+            const chatWithError = {
+              ...currentChat,
+              messages: [...updatedMessages, errorMessage],
+              updatedAt: new Date(),
+            };
+            saveChat(chatWithError).catch(console.error);
+          }
         } finally {
           setIsLoading(false);
         }

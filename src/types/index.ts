@@ -2,7 +2,7 @@ export interface Message {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
-  timestamp: Date;
+  timestamp: Date | string; // Can be Date object or string from API
   isEditing?: boolean;
   attachments?: Attachment[];
 }
@@ -20,8 +20,8 @@ export interface Chat {
   id: string;
   title: string;
   messages: Message[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string; // Can be Date object or string from API
+  updatedAt: Date | string; // Can be Date object or string from API
   userId?: string;
 }
 
@@ -36,6 +36,11 @@ export interface FileUploadResponse {
   url?: string;
   publicId?: string;
   error?: string;
+}
+
+export interface UploadedFile extends File {
+  url: string;
+  publicId: string;
 }
 
 export interface StreamingResponse {

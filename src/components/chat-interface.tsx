@@ -4,14 +4,14 @@ import { MessageComponent } from "@/components/message";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Message } from "@/types";
+import { Message, UploadedFile } from "@/types";
 import { FileText, Image, MessageSquare, Paperclip, Send } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
 interface ChatInterfaceProps {
   messages: Message[];
   isLoading: boolean;
-  onSendMessage: (content: string, attachments?: File[]) => void;
+  onSendMessage: (content: string, attachments?: UploadedFile[]) => void;
   onEditMessage: (messageId: string, newContent: string) => void;
 }
 
@@ -22,7 +22,7 @@ export function ChatInterface({
   onEditMessage,
 }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
-  const [attachments, setAttachments] = useState<File[]>([]);
+  const [attachments, setAttachments] = useState<UploadedFile[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -73,7 +73,7 @@ export function ChatInterface({
               ...file,
               url: result.url, // Use Cloudinary URL
               publicId: result.publicId,
-            } as File & { url: string; publicId: string },
+            } as UploadedFile,
           ]);
         } else {
           console.error("Upload failed:", await response.text());
