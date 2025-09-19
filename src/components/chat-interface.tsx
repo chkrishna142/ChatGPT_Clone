@@ -1,11 +1,19 @@
 "use client";
 
+import { MemoryPanel } from "@/components/memory-panel";
 import { MessageComponent } from "@/components/message";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { Message, UploadedFile } from "@/types";
-import { FileText, Image, MessageSquare, Paperclip, Send } from "lucide-react";
+import {
+  Brain,
+  FileText,
+  Image,
+  MessageSquare,
+  Paperclip,
+  Send,
+} from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
 interface ChatInterfaceProps {
@@ -23,6 +31,7 @@ export function ChatInterface({
 }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<UploadedFile[]>([]);
+  const [isMemoryPanelOpen, setIsMemoryPanelOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -185,6 +194,16 @@ export function ChatInterface({
                 </Button>
               </div>
               <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-[52px] w-[52px] border-gray-300"
+                onClick={() => setIsMemoryPanelOpen(true)}
+                title="View Memories"
+              >
+                <Brain size={18} />
+              </Button>
+              <Button
                 type="submit"
                 disabled={
                   (!input.trim() && attachments.length === 0) || isLoading
@@ -212,6 +231,12 @@ export function ChatInterface({
           />
         </div>
       </div>
+
+      {/* Memory Panel */}
+      <MemoryPanel
+        isOpen={isMemoryPanelOpen}
+        onClose={() => setIsMemoryPanelOpen(false)}
+      />
     </div>
   );
 }

@@ -1,37 +1,39 @@
 @import "tailwindcss";
 
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  width: 100%;
+}
+
 body {
   height: 100%;
   width: 100%;
-  font-family: "Lexend", sans-serif;
-}
-:root {
-  /* --background: #ffffff;
-  --foreground: #171717; */
   margin: 0;
   padding: 0;
-  height: 100vh;
-  width: 100vw;
+  font-family: "Lexend", sans-serif;
 }
 
-/* @media (prefers-color-scheme: dark) {
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
-} */
+}
 
 ::-webkit-scrollbar {
   width: 5px;
@@ -52,6 +54,34 @@ body {
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
   background: #999;
+}
+
+/* Development CSS helpers */
+@layer base {
+  /* Prevent layout shift during development */
+  * {
+    transition: none !important;
+  }
+
+  /* Ensure proper font loading */
+  body {
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Fix for Next.js error overlay interference */
+#__next-build-watcher {
+  display: none !important;
+}
+
+/* Prevent flash of unstyled content */
+.loading {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.loaded {
+  opacity: 1;
 }
 
 @layer base {

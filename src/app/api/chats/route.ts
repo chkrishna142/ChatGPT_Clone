@@ -1,13 +1,20 @@
 import connectDB from "@/config/database";
 import { ChatModel } from "@/lib/models";
+import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   try {
     await connectDB();
-
-    const url = new URL(req.url);
-    const userId = url.searchParams.get("userId") || "default";
 
     const chats = await ChatModel.find({ userId })
       .sort({ updatedAt: -1 })
@@ -19,7 +26,6 @@ export async function GET(req: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error: any) {
-    console.error("Get chats error:", error);
     return new Response(
       JSON.stringify({
         error: "Failed to fetch chats",
@@ -70,16 +76,26 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  const { userId: clerkUserId } = await auth();
+
+  if (!clerkUserId) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   try {
     await connectDB();
 
-    const { id, title, messages, userId = "default" } = await req.json();
+    const { id, title, messages } = await req.json();
 
     const chat = await ChatModel.findOneAndUpdate(
-      { id, userId },
+      { id, userId: clerkUserId },
       {
         title,
         messages,
+        userId: clerkUserId,
         updatedAt: new Date(),
       },
       { new: true, upsert: true }
@@ -90,7 +106,6 @@ export async function PUT(req: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error: any) {
-    console.error("Update chat error:", error);
     return new Response(
       JSON.stringify({
         error: "Failed to update chat",
@@ -105,12 +120,20 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   try {
     await connectDB();
 
     const url = new URL(req.url);
     const chatId = url.searchParams.get("id");
-    const userId = url.searchParams.get("userId") || "default";
 
     if (!chatId) {
       return new Response(JSON.stringify({ error: "Chat ID is required" }), {
@@ -126,7 +149,6 @@ export async function DELETE(req: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error: any) {
-    console.error("Delete chat error:", error);
     return new Response(
       JSON.stringify({
         error: "Failed to delete chat",

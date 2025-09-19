@@ -32,7 +32,7 @@ export function useChat() {
         }
       }
     } catch (error) {
-      console.error("Failed to load chats:", error);
+      // Failed to load chats
     } finally {
       setIsLoadingChats(false);
     }
@@ -47,10 +47,10 @@ export function useChat() {
       });
 
       if (!response.ok) {
-        console.error("Failed to save chat:", await response.text());
+        // Failed to save chat
       }
     } catch (error) {
-      console.error("Error saving chat:", error);
+      // Error saving chat
     }
   };
 
@@ -61,10 +61,10 @@ export function useChat() {
       });
 
       if (!response.ok) {
-        console.error("Failed to delete chat:", await response.text());
+        // Failed to delete chat
       }
     } catch (error) {
-      console.error("Error deleting chat:", error);
+      // Error deleting chat
     }
   };
 
@@ -141,7 +141,6 @@ export function useChat() {
       setChats((prevChats) => {
         const currentChat = prevChats.find((c) => c.id === chatId);
         if (!currentChat) {
-          console.error("Chat not found:", chatId);
           return prevChats;
         }
 
@@ -163,7 +162,6 @@ export function useChat() {
       });
 
       if (!chatWithUserMessage) {
-        console.error("Failed to create chat with user message");
         return;
       }
 
@@ -176,18 +174,20 @@ export function useChat() {
           content: msg.content,
         }));
 
-        // Call the AI API
+        // Call the AI API with chatId for memory context
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ messages }),
+          body: JSON.stringify({
+            messages,
+            chatId: chatId,
+          }),
         });
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error("API Error Response:", errorText);
           throw new Error(
             `Failed to get response: ${response.status} ${errorText}`
           );
@@ -289,7 +289,6 @@ export function useChat() {
 
         await saveChat(finalChat);
       } catch (error) {
-        console.error("Error sending message:", error);
         const errorMessageId = generateId();
         const errorMessage = {
           id: errorMessageId,
@@ -319,7 +318,7 @@ export function useChat() {
         };
 
         // Save chat with error message to database
-        saveChat(chatWithError).catch(console.error);
+        saveChat(chatWithError).catch(() => {});
       } finally {
         setIsLoading(false);
       }
@@ -388,7 +387,10 @@ export function useChat() {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ messages }),
+            body: JSON.stringify({
+              messages,
+              chatId: currentChatId,
+            }),
           });
 
           if (!response.ok) {

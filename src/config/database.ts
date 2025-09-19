@@ -10,8 +10,8 @@ if (!MONGODB_URI) {
 
 mongoose
   .connect(process.env.MONGODB_URI!)
-  .then(() => console.log("MongoDB Connected ✅"))
-  .catch((err) => console.error("MongoDB Connection Error ❌", err));
+  .then(() => {})
+  .catch((err) => {});
 
 /**
  * Global is used here to maintain a cached connection across hot reloads

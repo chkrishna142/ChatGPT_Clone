@@ -48,3 +48,26 @@ export interface StreamingResponse {
   isComplete: boolean;
   error?: string;
 }
+
+export interface MemoryItem {
+  id: string;
+  content: string;
+  category: string;
+  metadata: {
+    timestamp: string;
+    chatId?: string;
+    messageId?: string;
+    confidence?: number;
+    importance?: number;
+  };
+}
+
+export interface MemorySearchResult {
+  memories: MemoryItem[];
+  relevantContext: string;
+}
+
+export interface ChatWithMemory extends Chat {
+  relevantMemories?: MemoryItem[];
+  personalizedContext?: string;
+}
