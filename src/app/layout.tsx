@@ -1,3 +1,4 @@
+import { ToastContainer } from "@/components/ui";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -30,6 +31,7 @@ export default function RootLayout({
           suppressHydrationWarning={true}
         >
           {children}
+          <ToastContainer />
         </body>
       </html>
     </ClerkProvider>

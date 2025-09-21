@@ -17,6 +17,21 @@ export function useChat() {
     loadChats();
   }, []);
 
+  // Load current chat ID from localStorage on mount
+  useEffect(() => {
+    const savedChatId = localStorage.getItem("galaxy-chat-current-id");
+    if (savedChatId) {
+      setCurrentChatId(savedChatId);
+    }
+  }, []);
+
+  // Save current chat ID to localStorage whenever it changes
+  useEffect(() => {
+    if (currentChatId) {
+      localStorage.setItem("galaxy-chat-current-id", currentChatId);
+    }
+  }, [currentChatId]);
+
   const loadChats = async () => {
     try {
       setIsLoadingChats(true);
@@ -26,9 +41,23 @@ export function useChat() {
         const savedChats = await response.json();
         setChats(savedChats);
 
-        // Set current chat to the most recent one if none selected
-        if (!currentChatId && savedChats.length > 0) {
-          setCurrentChatId(savedChats[0].id);
+        // Get saved chat ID from localStorage
+        const savedChatId = localStorage.getItem("galaxy-chat-current-id");
+
+        // Only set current chat if:
+        // 1. No current chat ID is set AND
+        // 2. Either no saved chat ID exists OR the saved chat ID is not found in the loaded chats
+        if (!currentChatId) {
+          if (
+            savedChatId &&
+            savedChats.some((chat: Chat) => chat.id === savedChatId)
+          ) {
+            // Use the saved chat ID if it exists in the loaded chats
+            setCurrentChatId(savedChatId);
+          } else if (savedChats.length > 0) {
+            // Fallback to the first chat if saved chat doesn't exist
+            setCurrentChatId(savedChats[0].id);
+          }
         }
       }
     } catch (error) {
@@ -95,15 +124,53 @@ export function useChat() {
   // Delete a chat
   const deleteChat = useCallback(
     async (chatId: string) => {
-      setChats((prev) => prev.filter((chat) => chat.id !== chatId));
-      if (currentChatId === chatId) {
-        setCurrentChatId(undefined);
-      }
+      setChats((prev) => {
+        const remainingChats = prev.filter((chat) => chat.id !== chatId);
+
+        // If we're deleting the currently active chat, auto-select the first remaining chat
+        if (currentChatId === chatId && remainingChats.length > 0) {
+          setCurrentChatId(remainingChats[0].id);
+        } else if (currentChatId === chatId) {
+          // If no chats remain, clear the current chat ID
+          setCurrentChatId(undefined);
+        }
+
+        return remainingChats;
+      });
 
       // Delete from MongoDB
       await deleteChatFromDB(chatId);
     },
     [currentChatId]
+  );
+
+  // Rename a chat
+  const renameChat = useCallback(
+    async (chatId: string, newTitle: string) => {
+      try {
+        setChats((prev) =>
+          prev.map((chat) =>
+            chat.id === chatId
+              ? { ...chat, title: newTitle, updatedAt: new Date() }
+              : chat
+          )
+        );
+
+        // Save to MongoDB
+        const chat = chats.find((c) => c.id === chatId);
+        if (chat) {
+          const updatedChat = {
+            ...chat,
+            title: newTitle,
+            updatedAt: new Date(),
+          };
+          await saveChat(updatedChat);
+        }
+      } catch (error) {
+        console.error("Error renaming chat:", error);
+      }
+    },
+    [chats]
   );
 
   // Send a message
@@ -126,12 +193,15 @@ export function useChat() {
         content,
         timestamp: new Date(),
         attachments: attachments?.map((file) => ({
-          id: generateId(),
+          id: file.publicId || file.uuid || generateId(),
           type: file.type.startsWith("image/") ? "image" : "document",
-          url: file.url, // Use Cloudinary URL from uploaded file
+          url: file.url, // Use URL from uploaded file (Cloudinary or Uploadcare)
           filename: file.name,
           size: file.size,
           mimeType: file.type,
+          publicId: file.publicId, // For Cloudinary files
+          uuid: file.uuid, // For Uploadcare files
+          source: file.source, // Track the source
         })),
       };
 
@@ -510,6 +580,60 @@ export function useChat() {
     [currentChatId, chats]
   );
 
+  // Like a message
+  const likeMessage = useCallback(
+    (messageId: string, liked: boolean) => {
+      if (!currentChatId) return;
+
+      setChats((prev) =>
+        prev.map((chat) =>
+          chat.id === currentChatId
+            ? {
+                ...chat,
+                messages: chat.messages.map((msg) =>
+                  msg.id === messageId
+                    ? { ...msg, liked, disliked: liked ? false : msg.disliked }
+                    : msg
+                ),
+                updatedAt: new Date(),
+              }
+            : chat
+        )
+      );
+
+      // Save to database (async, don't wait)
+      saveChat(chats.find((c) => c.id === currentChatId)!).catch(console.error);
+    },
+    [currentChatId, chats, saveChat]
+  );
+
+  // Dislike a message
+  const dislikeMessage = useCallback(
+    (messageId: string, disliked: boolean) => {
+      if (!currentChatId) return;
+
+      setChats((prev) =>
+        prev.map((chat) =>
+          chat.id === currentChatId
+            ? {
+                ...chat,
+                messages: chat.messages.map((msg) =>
+                  msg.id === messageId
+                    ? { ...msg, disliked, liked: disliked ? false : msg.liked }
+                    : msg
+                ),
+                updatedAt: new Date(),
+              }
+            : chat
+        )
+      );
+
+      // Save to database (async, don't wait)
+      saveChat(chats.find((c) => c.id === currentChatId)!).catch(console.error);
+    },
+    [currentChatId, chats, saveChat]
+  );
+
   return {
     chats,
     currentChatId,
@@ -520,7 +644,10 @@ export function useChat() {
     createNewChat,
     selectChat,
     deleteChat,
+    renameChat,
     sendMessage,
     editMessage,
+    likeMessage,
+    dislikeMessage,
   };
 }

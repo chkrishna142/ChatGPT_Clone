@@ -58,10 +58,9 @@ export async function POST(req: NextRequest) {
           {
             resource_type: "auto", // Automatically detect file type
             folder: "galaxy-chat", // Organize uploads in folder
-            public_id: `${Date.now()}-${file.name.replace(
-              /[^a-zA-Z0-9.-]/g,
-              "_"
-            )}`,
+            public_id: `${Date.now()}-${file.name
+              .replace(/[^a-zA-Z0-9.-]/g, "_")
+              .replace(/\.[^/.]+$/, "")}`, // Remove file extension to prevent duplication
           },
           (error, result) => {
             if (error) reject(error);
@@ -73,6 +72,14 @@ export async function POST(req: NextRequest) {
 
     const result = uploadResult as any;
 
+    console.log(`☁️ Cloudinary upload result:`, {
+      originalFilename: file.name,
+      publicId: result.public_id,
+      secureUrl: result.secure_url,
+      format: result.format,
+      resourceType: result.resource_type,
+    });
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -80,7 +87,6 @@ export async function POST(req: NextRequest) {
         publicId: result.public_id,
         resourceType: result.resource_type,
         format: result.format,
-        size: result.bytes,
         filename: file.name,
         mimeType: file.type,
       }),

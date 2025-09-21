@@ -1,14 +1,16 @@
 "use client";
 
 import { ChatInterface } from "@/components/chat-interface";
+import { ClientOnly } from "@/components/client-only";
 import { Sidebar } from "@/components/sidebar";
 import { useChat } from "@/lib/hooks/use-chat";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function Page() {
   const { isSignedIn, isLoaded, user } = useUser();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const {
     chats,
     currentChatId,
@@ -18,8 +20,11 @@ export default function Page() {
     createNewChat,
     selectChat,
     deleteChat,
+    renameChat,
     sendMessage,
     editMessage,
+    likeMessage,
+    dislikeMessage,
   } = useChat();
 
   // Create initial chat if none exists and not loading
@@ -29,8 +34,8 @@ export default function Page() {
     }
   }, [isLoadingChats, chats.length, createNewChat, isSignedIn]);
 
-  // Show loading spinner while Clerk loads
-  if (!isLoaded) {
+  // Show loading spinner while Clerk loads or chats are loading
+  if (!isLoaded || (isSignedIn && isLoadingChats)) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-100">
         <div className="text-center">
@@ -68,23 +73,58 @@ export default function Page() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <Sidebar
-        chats={chats}
-        currentChatId={currentChatId}
-        onNewChat={createNewChat}
-        onSelectChat={selectChat}
-        onDeleteChat={deleteChat}
-        user={user}
-      />
-      <div className="flex-1">
-        <ChatInterface
-          messages={messages}
-          isLoading={isLoading}
-          onSendMessage={sendMessage}
-          onEditMessage={editMessage}
+    <ClientOnly
+      fallback={
+        <div className="flex h-screen items-center justify-center bg-gray-100">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+            <p className="text-gray-600">Loading Galaxy Chat...</p>
+          </div>
+        </div>
+      }
+    >
+      <div className="flex h-screen bg-gray-100 relative overflow-hidden">
+        <Sidebar
+          chats={chats || []}
+          currentChatId={currentChatId}
+          onNewChat={createNewChat}
+          onSelectChat={(chatId, hideSidebar) => {
+            selectChat(chatId);
+            if (hideSidebar && window.innerWidth < 768) {
+              setSidebarCollapsed(true);
+            }
+          }}
+          onDeleteChat={deleteChat}
+          onRenameChat={renameChat}
+          user={user}
+          isCollapsed={sidebarCollapsed}
+          onToggleCollapse={setSidebarCollapsed}
         />
+
+        {/* Mobile Overlay */}
+        {!sidebarCollapsed && (
+          <div
+            className="fixed inset-0 bg-transparent bg-opacity-50 z-30 md:hidden"
+            onClick={() => setSidebarCollapsed(true)}
+          />
+        )}
+
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <ChatInterface
+            messages={messages || []}
+            isLoading={isLoading}
+            onSendMessage={sendMessage}
+            onEditMessage={editMessage}
+            onLikeMessage={likeMessage}
+            onDislikeMessage={dislikeMessage}
+            currentChatId={currentChatId}
+            currentChatTitle={chats.find((c) => c.id === currentChatId)?.title}
+            onDeleteChat={deleteChat}
+            sidebarCollapsed={sidebarCollapsed}
+            onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+          />
+        </div>
       </div>
-    </div>
+    </ClientOnly>
   );
 }

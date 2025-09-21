@@ -134,17 +134,37 @@ export function MessageComponent({ message, onEdit }: MessageProps) {
         {/* Attachments */}
         {message.attachments && message.attachments.length > 0 && (
           <div className="mt-3 space-y-2">
-            {message.attachments.map((attachment) => (
+            {message.attachments.map((attachment, index) => (
               <div
-                key={attachment.id}
+                key={attachment.id || `attachment-${index}`}
                 className="flex items-center space-x-2 p-2 bg-gray-100 rounded-lg"
               >
                 {attachment.type === "image" ? (
-                  <img
-                    src={attachment.url}
-                    alt={attachment.filename}
-                    className="max-w-sm max-h-48 rounded object-cover"
-                  />
+                  <div className="flex flex-col space-y-2">
+                    <img
+                      src={attachment.url}
+                      alt={attachment.filename}
+                      className="max-w-sm max-h-48 rounded object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => window.open(attachment.url, "_blank")}
+                    />
+                    <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-1">
+                        <span className="text-xs text-gray-500">
+                          {attachment.filename}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          ({(attachment.size / 1024).toFixed(1)} KB)
+                        </span>
+                      </div>
+                      {attachment.source && (
+                        <span className="text-xs px-2 py-1 bg-blue-100 text-blue-600 rounded-full">
+                          {attachment.source === "cloudinary"
+                            ? "☁️ Cloudinary"
+                            : "📁 Uploadcare"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 ) : (
                   <div className="flex items-center space-x-2">
                     <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
@@ -152,10 +172,20 @@ export function MessageComponent({ message, onEdit }: MessageProps) {
                         {attachment.filename.split(".").pop()?.toUpperCase()}
                       </span>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {attachment.filename}
-                      </p>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <p
+                          className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600"
+                          onClick={() => window.open(attachment.url, "_blank")}
+                        >
+                          {attachment.filename}
+                        </p>
+                        {attachment.source && (
+                          <span className="text-xs px-2 py-1 bg-blue-100 text-blue-600 rounded-full">
+                            {attachment.source === "cloudinary" ? "☁️" : "📁"}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-500">
                         {(attachment.size / 1024).toFixed(1)} KB
                       </p>
@@ -170,3 +200,5 @@ export function MessageComponent({ message, onEdit }: MessageProps) {
     </div>
   );
 }
+
+export { MessageComponent as Message };

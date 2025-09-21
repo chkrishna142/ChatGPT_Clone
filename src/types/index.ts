@@ -5,15 +5,20 @@ export interface Message {
   timestamp: Date | string; // Can be Date object or string from API
   isEditing?: boolean;
   attachments?: Attachment[];
+  liked?: boolean;
+  disliked?: boolean;
 }
 
 export interface Attachment {
-  id: string;
+  id?: string;
   type: "image" | "document";
   url: string;
   filename: string;
   size: number;
   mimeType: string;
+  publicId?: string; // For Cloudinary files
+  uuid?: string; // For Uploadcare files
+  source?: "cloudinary" | "uploadcare"; // Track the source
 }
 
 export interface Chat {
@@ -40,7 +45,11 @@ export interface FileUploadResponse {
 
 export interface UploadedFile extends File {
   url: string;
-  publicId: string;
+  publicId?: string; // For Cloudinary files
+  uuid?: string; // For Uploadcare files
+  isUploading?: boolean;
+  uploadProgress?: number;
+  source?: "cloudinary" | "uploadcare"; // Track the source
 }
 
 export interface StreamingResponse {

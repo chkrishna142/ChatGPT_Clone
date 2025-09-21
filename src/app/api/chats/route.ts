@@ -1,5 +1,5 @@
 import connectDB from "@/config/database";
-import { ChatModel } from "@/lib/models";
+import { Chat } from "@/lib/models";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
-    const chats = await ChatModel.find({ userId })
+    const chats = await Chat.find({ userId })
       .sort({ updatedAt: -1 })
       .limit(50)
       .lean();
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     const { id, title, messages, userId = "default" } = await req.json();
 
-    const chat = new ChatModel({
+    const chat = new Chat({
       id,
       title,
       messages,
@@ -90,7 +90,7 @@ export async function PUT(req: NextRequest) {
 
     const { id, title, messages } = await req.json();
 
-    const chat = await ChatModel.findOneAndUpdate(
+    const chat = await Chat.findOneAndUpdate(
       { id, userId: clerkUserId },
       {
         title,
@@ -142,7 +142,7 @@ export async function DELETE(req: NextRequest) {
       });
     }
 
-    await ChatModel.findOneAndDelete({ id: chatId, userId });
+    await Chat.findOneAndDelete({ id: chatId, userId });
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

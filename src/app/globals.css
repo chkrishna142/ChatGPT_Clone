@@ -58,11 +58,6 @@ body {
 
 /* Development CSS helpers */
 @layer base {
-  /* Prevent layout shift during development */
-  * {
-    transition: none !important;
-  }
-
   /* Ensure proper font loading */
   body {
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -89,5 +84,14 @@ body {
   input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
+  }
+
+  /* Ensure all buttons have pointer cursor */
+  button {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
   }
 }

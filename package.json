@@ -22,6 +22,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@types/mongoose": "^5.11.96",
     "@types/react-syntax-highlighter": "^15.5.13",
+    "@uploadcare/react-uploader": "^1.10.2",
     "ai": "^5.0.45",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.7.0",
@@ -29,6 +30,7 @@
     "dotenv": "^17.2.2",
     "framer-motion": "^12.23.14",
     "groq-sdk": "^0.32.0",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.544.0",
     "mem0ai": "^2.1.38",
     "mongodb": "^6.19.0",
@@ -38,6 +40,7 @@
     "openai": "^5.20.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-icons": "^5.5.0",
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^15.6.6",
     "tailwind-merge": "^3.3.1"
@@ -54,5 +57,8 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.13",
     "typescript": "^5"
+  },
+  "overrides": {
+    "zod": "^3.25.76"
   }
 }
