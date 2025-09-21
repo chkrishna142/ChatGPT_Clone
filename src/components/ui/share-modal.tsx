@@ -9,7 +9,7 @@ interface ShareModalProps {
   isOpen: boolean;
   onClose: () => void;
   chatId: string;
-  chatTitle: string;
+  chatTitle?: string;
 }
 
 export function ShareModal({
@@ -113,9 +113,10 @@ export function ShareModal({
             <div className="flex-1 flex items-center bg-gray-50 border border-gray-200 rounded-full px-4 py-2">
               <input
                 type="text"
+                value=""
                 readOnly
                 className="flex-1 bg-transparent text-sm text-gray-400 outline-none"
-                placeholder="https://galaxychat.com/share/..."
+                placeholder="https://chatgpt.com/share/..."
               />
             </div>
             <Button
