@@ -14,8 +14,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Galaxy ChatGPT",
+  title: "ChatGPT",
   description: "Clone of ChatGPT",
+  openGraph: {
+    images: [
+      {
+        url: "/gpticon.webp",
+        width: 1200,
+        height: 630,
+        alt: "ChatGPT Clone Preview",
+      },
+    ],
+  },
+  icons: {
+    icon: "/gpticon.webp",
+    shortcut: "/gpticon.webp",
+    apple: "/gpticon.webp",
+  },
 };
 
 export default function RootLayout({
