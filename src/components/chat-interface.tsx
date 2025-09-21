@@ -87,22 +87,15 @@ export function ChatInterface({
   // File selection now handled by Uploadcare - handleFileSelect removed
 
   const handleUploadcareFiles = useCallback(async (uploadcareFiles: any[]) => {
-    console.log(
-      "🔄 handleUploadcareFiles called with:",
-      uploadcareFiles.length,
-      "files"
-    );
-    console.log(
-      "File UUIDs:",
-      uploadcareFiles.map((f) => f.uuid)
-    );
+    // Processing uploadcare files
+    // Processing file UUIDs
 
     if (!uploadcareFiles || uploadcareFiles.length === 0) return;
 
     // Debounce rapid successive calls (within 200ms)
     const now = Date.now();
     if (now - lastUploadTimeRef.current < 200) {
-      console.log("⏱️ Debouncing rapid upload calls");
+      // Debouncing rapid upload calls
       return;
     }
     lastUploadTimeRef.current = now;
@@ -118,24 +111,18 @@ export function ChatInterface({
       );
 
       if (newFiles.length === 0) {
-        console.log("All files already in attachments, skipping duplicates");
+        // All files already in attachments, skipping duplicates
         return currentAttachments; // Return current state unchanged
       }
 
-      console.log(
-        `Processing ${newFiles.length} new files, skipping ${
-          uploadcareFiles.length - newFiles.length
-        } duplicates`
-      );
+      // Processing new files
 
       // Process Uploadcare files directly without transferring to Cloudinary
       const processedFiles = newFiles.map((file) => {
         // Better MIME type detection for Uploadcare files
         let mimeType = file.mimeType || "application/octet-stream";
 
-        console.log(
-          `🔍 Uploadcare file: ${file.name}, original mimeType: ${file.mimeType}, detected: ${mimeType}`
-        );
+        // Processing uploadcare file
 
         // If Uploadcare doesn't provide proper MIME type, try to detect from filename
         if (mimeType === "application/octet-stream" && file.name) {
@@ -159,9 +146,7 @@ export function ChatInterface({
 
           if (extension && mimeTypeMap[extension]) {
             mimeType = mimeTypeMap[extension];
-            console.log(
-              `✅ Detected MIME type from extension: ${extension} -> ${mimeType}`
-            );
+            // Detected MIME type from extension
           }
         }
 
@@ -193,24 +178,7 @@ export function ChatInterface({
       });
 
       // Add processed files to attachments
-      console.log(
-        "Before adding attachments - current count:",
-        currentAttachments.length
-      );
-      console.log(
-        "Files to add:",
-        processedFiles.map((f) => ({ name: f.name, uuid: f.uuid }))
-      );
-
       const newAttachments = [...currentAttachments, ...processedFiles];
-      console.log(
-        "After adding attachments - new count:",
-        newAttachments.length
-      );
-      console.log(
-        "All attachment UUIDs:",
-        newAttachments.map((a) => a.uuid)
-      );
       return newAttachments;
     });
   }, []); // No dependencies needed since we use setAttachments with function
@@ -218,11 +186,7 @@ export function ChatInterface({
   // Handle native file uploads
   const handleNativeFileUpload = async (files: File[]) => {
     // Check for invalid file types first
-    console.log(
-      "🔄 handleNativeFileUpload called with:",
-      files.length,
-      "files"
-    );
+    // Processing native file upload
     const allowedTypes = [
       "image/jpeg",
       "image/png",
@@ -289,18 +253,7 @@ export function ChatInterface({
       const file = validFiles[i];
       const attachmentIndex = startingIndex + i;
 
-      console.log(
-        `📤 Starting upload for file handleNativeFileUpload ${i + 1}/${
-          validFiles.length
-        }:`,
-        {
-          filename: file.name,
-          mimeType: file.type,
-          attachmentIndex: attachmentIndex,
-          startingIndex: startingIndex,
-          currentAttachmentsLength: attachments.length,
-        }
-      );
+      // Starting file upload
 
       try {
         // Simulate progress updates
@@ -338,28 +291,16 @@ export function ChatInterface({
 
         const result = await response.json();
 
-        console.log(` Upload successful for ${file.name}:`, {
-          result: result,
-          attachmentIndex: attachmentIndex,
-          url: result.url,
-          publicId: result.publicId,
-          fileType: file.type,
-          originalName: file.name,
-        });
+        // Upload successful
 
         // Test URL accessibility for PDFs
         if (file.type === "application/pdf") {
-          console.log(`Testing PDF URL accessibility: ${result.url}`);
           fetch(result.url, { method: "HEAD" })
             .then((response) => {
-              console.log(`PDF URL response:`, {
-                status: response.status,
-                statusText: response.statusText,
-                headers: Object.fromEntries(response.headers.entries()),
-              });
+              // PDF URL accessible
             })
             .catch((error) => {
-              console.error(` PDF URL test failed:`, error);
+              console.error("PDF URL test failed:", error);
             });
         }
 
@@ -368,7 +309,7 @@ export function ChatInterface({
           const newAttachments = [...prev];
 
           if (newAttachments[attachmentIndex]) {
-            console.log(`📝 Before update:`, newAttachments[attachmentIndex]);
+            // Updating attachment
             newAttachments[attachmentIndex] = {
               ...newAttachments[attachmentIndex],
               url: result.url,
@@ -665,25 +606,18 @@ export function ChatInterface({
                           className="truncate max-w-32 cursor-pointer hover:text-blue-600"
                           onClick={() => {
                             if (file.url) {
-                              console.log(`🔗 Opening file:`, {
-                                url: file.url,
-                                name: file.name,
-                                type: file.type,
-                                source: file.source,
-                              });
+                              // Opening file
 
                               // For PDFs, try different opening strategies
                               if (file.type === "application/pdf") {
-                                console.log(`📄 Opening PDF: ${file.url}`);
+                                // Opening PDF
                                 // Try opening in new tab first
                                 const newWindow = window.open(
                                   file.url,
                                   "_blank"
                                 );
                                 if (!newWindow) {
-                                  console.log(
-                                    "❌ Popup blocked, trying direct navigation"
-                                  );
+                                  // Popup blocked, trying direct navigation
                                   // If popup blocked, try direct navigation
                                   window.location.href = file.url;
                                 }
@@ -805,12 +739,7 @@ export function ChatInterface({
                               alt={file.name}
                               className="mr-2 w-8 h-8 object-cover rounded text-blue-500 cursor-pointer hover:opacity-80"
                               onClick={() => {
-                                console.log(`🖼️ Opening image:`, {
-                                  url: file.url,
-                                  name: file.name,
-                                  type: file.type,
-                                  source: file.source,
-                                });
+                                // Opening image
                                 window.open(file.url, "_blank");
                               }}
                             />
@@ -824,25 +753,18 @@ export function ChatInterface({
                           className="truncate max-w-32 cursor-pointer hover:text-blue-600"
                           onClick={() => {
                             if (file.url) {
-                              console.log(`🔗 Opening file:`, {
-                                url: file.url,
-                                name: file.name,
-                                type: file.type,
-                                source: file.source,
-                              });
+                              // Opening file
 
                               // For PDFs, try different opening strategies
                               if (file.type === "application/pdf") {
-                                console.log(`📄 Opening PDF: ${file.url}`);
+                                // Opening PDF
                                 // Try opening in new tab first
                                 const newWindow = window.open(
                                   file.url,
                                   "_blank"
                                 );
                                 if (!newWindow) {
-                                  console.log(
-                                    "❌ Popup blocked, trying direct navigation"
-                                  );
+                                  // Popup blocked, trying direct navigation
                                   // If popup blocked, try direct navigation
                                   window.location.href = file.url;
                                 }

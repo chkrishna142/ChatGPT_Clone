@@ -184,9 +184,7 @@ export function ChatMessage({
                             alt={attachment.filename}
                             className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl max-h-48 sm:max-h-56 md:max-h-64 rounded object-cover cursor-pointer hover:opacity-90 transition-opacity"
                             onClick={() => {
-                              console.log(
-                                `🖼️ Opening image URL: ${attachment.url}`
-                              );
+                              // Opening image
                               window.open(attachment.url, "_blank");
                             }}
                           />
@@ -218,9 +216,7 @@ export function ChatMessage({
                               title="View or download this file"
                               onClick={(e) => {
                                 // Log the URL being opened for debugging
-                                console.log(
-                                  `🔗 Opening file URL: ${attachment.url}`
-                                );
+                                // Opening file
                               }}
                             >
                               {attachment.filename}

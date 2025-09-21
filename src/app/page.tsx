@@ -40,7 +40,7 @@ export default function Page() {
       <div className="flex h-screen items-center justify-center bg-gray-100">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading Galaxy Chat...</p>
+          <p className="text-gray-600">Loading ChatGPT...</p>
         </div>
       </div>
     );
@@ -52,7 +52,7 @@ export default function Page() {
       <div className="flex h-screen items-center justify-center bg-gray-100">
         <div className="max-w-md text-center space-y-6">
           <div className="space-y-2">
-            <h1 className="text-4xl font-bold text-gray-900">Galaxy Chat</h1>
+            <h1 className="text-4xl font-bold text-gray-900">ChatGPT</h1>
             <p className="text-gray-600">
               Your personalized AI assistant with memory
             </p>
@@ -78,7 +78,7 @@ export default function Page() {
         <div className="flex h-screen items-center justify-center bg-gray-100">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-            <p className="text-gray-600">Loading Galaxy Chat...</p>
+            <p className="text-gray-600">Loading ChatGPT...</p>
           </div>
         </div>
       }

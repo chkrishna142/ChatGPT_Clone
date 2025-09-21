@@ -19,7 +19,7 @@ export function useChat() {
 
   // Load current chat ID from localStorage on mount
   useEffect(() => {
-    const savedChatId = localStorage.getItem("galaxy-chat-current-id");
+    const savedChatId = localStorage.getItem("chatgpt-current-id");
     if (savedChatId) {
       setCurrentChatId(savedChatId);
     }
@@ -28,7 +28,7 @@ export function useChat() {
   // Save current chat ID to localStorage whenever it changes
   useEffect(() => {
     if (currentChatId) {
-      localStorage.setItem("galaxy-chat-current-id", currentChatId);
+      localStorage.setItem("chatgpt-current-id", currentChatId);
     }
   }, [currentChatId]);
 
@@ -42,7 +42,7 @@ export function useChat() {
         setChats(savedChats);
 
         // Get saved chat ID from localStorage
-        const savedChatId = localStorage.getItem("galaxy-chat-current-id");
+        const savedChatId = localStorage.getItem("chatgpt-current-id");
 
         // Only set current chat if:
         // 1. No current chat ID is set AND

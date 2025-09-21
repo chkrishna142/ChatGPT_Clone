@@ -11,8 +11,9 @@ const config: Config = {
       colors: {
         primary: {
           orange: "#FF7A4D",
-          navy: "#182331",
           white: "#FFFFFF",
+
+          navy: "#182331",
         },
       },
       screens: {

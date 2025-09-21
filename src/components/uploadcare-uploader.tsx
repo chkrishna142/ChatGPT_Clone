@@ -246,9 +246,7 @@ export function UploadcareUploader({
       setUploadedFiles((prev) => {
         const newFiles = [...prev, fileInfo];
 
-        console.log(
-          `📤 Uploadcare file uploaded: ${fileInfo.name}, total files: ${newFiles.length}`
-        );
+        // Uploadcare file uploaded
 
         // Clear any existing timeout
         if (callbackTimeoutRef.current) {
@@ -258,9 +256,7 @@ export function UploadcareUploader({
         // Schedule callback with all accumulated files after a delay
         // This allows multiple files to be collected before calling the parent
         callbackTimeoutRef.current = setTimeout(() => {
-          console.log(
-            `📤 Calling onFilesSelected with all ${newFiles.length} files`
-          );
+          // Calling onFilesSelected with all files
           onFilesSelected(newFiles);
         }, 200); // Increased delay to allow multiple files to accumulate
 

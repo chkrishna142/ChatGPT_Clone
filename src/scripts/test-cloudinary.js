@@ -16,11 +16,11 @@ async function run() {
     );
     const res = await cloudinary.uploader.upload(
       "/Users/krishnach/Downloads/flare.svg",
-      { folder: "galaxy-chat-tests" }
+      { folder: "chatgpt-tests" }
     );
-    console.log("✅ Upload success:", res.secure_url);
+    console.log("Upload success:", res.secure_url);
   } catch (err) {
-    console.error("❌ Upload failed:", err);
+    console.error("Upload failed:", err);
   }
 }
 

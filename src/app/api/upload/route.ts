@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
         .upload_stream(
           {
             resource_type: "auto", // Automatically detect file type
-            folder: "galaxy-chat", // Organize uploads in folder
+            folder: "chatgpt", // Organize uploads in folder
             public_id: `${Date.now()}-${file.name
               .replace(/[^a-zA-Z0-9.-]/g, "_")
               .replace(/\.[^/.]+$/, "")}`, // Remove file extension to prevent duplication
@@ -72,13 +72,7 @@ export async function POST(req: NextRequest) {
 
     const result = uploadResult as any;
 
-    console.log(`☁️ Cloudinary upload result:`, {
-      originalFilename: file.name,
-      publicId: result.public_id,
-      secureUrl: result.secure_url,
-      format: result.format,
-      resourceType: result.resource_type,
-    });
+    // Upload successful
 
     return new Response(
       JSON.stringify({
