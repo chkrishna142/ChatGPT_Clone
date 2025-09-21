@@ -44,7 +44,13 @@ export async function POST(req: NextRequest) {
       // Only share messages that are not system messages or contain sensitive data
       const publicMessages = chat.messages.filter(
         (msg: any) => msg.role !== "system" && msg.content.trim().length > 0
-      );
+      ).map((msg: any) => ({
+        ...msg,
+        attachments: msg.attachments?.map((attachment: any) => ({
+          ...attachment,
+          size: attachment.size || 0 // Ensure size field exists, default to 0
+        }))
+      }));
 
       sharedChat = new SharedChat({
         shareId,
